@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nomad Nexus — Claim your £2 reward</title>
+<style>
+  :root{
+    --bg:#f7f7f8; --card:#fff; --fg:#0f1115; --muted:#6b7280;
+    --border:#e5e7eb; --primary:#0f1115; --primary-fg:#fff;
+    --danger:#dc2626; --ring:rgba(15,17,21,.15); --success:#16a34a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  main{min-height:100vh;padding:20px 16px;display:flex;align-items:center;justify-content:center}
+  .card{width:100%;max-width:440px;background:var(--card);border:1px solid var(--border);
+    border-radius:28px;padding:28px;box-shadow:0 1px 2px rgba(0,0,0,.04);position:relative}
+  h2{margin:0 0 16px;font-size:22px;text-align:center;font-weight:600}
+  p.muted{color:var(--muted);font-size:14px;margin:8px 0}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+  input,select,textarea{width:100%;padding:12px 14px;border:1px solid var(--border);
+    border-radius:12px;font-size:15px;background:#fff;color:var(--fg);outline:none;
+    font-family:inherit}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--ring)}
+  input.error,select.error,textarea.error{border-color:var(--danger);box-shadow:0 0 0 3px rgba(220,38,38,.15)}
+  textarea{resize:vertical;min-height:120px}
+  button{width:100%;padding:14px 16px;border-radius:12px;border:none;cursor:pointer;
+    background:var(--primary);color:var(--primary-fg);font-size:15px;font-weight:600;
+    margin-top:14px;font-family:inherit}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--fg);border:1px solid var(--border);margin-top:8px}
+  .row{display:flex;gap:8px}
+  .row > *{flex:1}
+  .stars{display:flex;justify-content:center;gap:6px;margin:10px 0}
+  .star{font-size:38px;cursor:pointer;color:#d1d5db;line-height:1;user-select:none;
+    transition:transform .1s}
+  .star.active{color:#0f1115}
+  .star:hover{transform:scale(1.1)}
+  .center{text-align:center}
+  .gift{font-size:64px;text-align:center;margin:8px 0}
+  .err-msg{color:var(--danger);font-size:12px;margin-top:4px;display:none}
+  .err-msg.show{display:block}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#0f1115;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;
+    opacity:0;transition:opacity .2s;z-index:100;max-width:90%}
+  .toast.show{opacity:1}
+  .toast.error{background:var(--danger)}
+  .hidden{display:none}
+  .fade-in{animation:fade .35s ease-out}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  small.counter{display:block;text-align:right;color:var(--muted);font-size:12px;margin-top:4px}
+  small.counter.ok{color:var(--success)}
+  #confettiCanvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1000}
+  .check-circle{width:84px;height:84px;border-radius:50%;background:var(--success);
+    display:flex;align-items:center;justify-content:center;margin:8px auto 16px;
+    color:#fff;font-size:46px;animation:pop .5s ease-out}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+  .thanks-text{color:var(--muted);font-size:15px;line-height:1.5;margin:10px 0}
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1 style="position:absolute;left:-9999px">Nomad Nexus £2 Reward</h1>
+
+    <section id="step1" class="center">
+      <div class="gift">🎁</div>
+      <h2>Get your £2 reward</h2>
+      <p class="muted">Quick form. Honest review. Instant reward.</p>
+      <button type="button" id="startBtn">Start</button>
+    </section>
+
+    <section id="step2" class="hidden fade-in">
+      <h2>Your details</h2>
+
+      <label>First Name</label>
+      <input type="text" id="fname" autocomplete="given-name" placeholder="First Name" />
+
+      <label>Last Name</label>
+      <input type="text" id="lname" autocomplete="family-name" placeholder="Last Name" />
+
+      <label>Email</label>
+      <input type="email" id="email" autocomplete="email" placeholder="Email" />
+
+      <label>Your PayPal</label>
+      <input type="email" id="paypal" placeholder="PayPal email" />
+
+      <label>Amazon Order Number</label>
+      <input type="text" id="order" placeholder="404-3118983-5298726" maxlength="19" inputmode="numeric" />
+      <div class="err-msg" id="orderErr">Format must be XXX-XXXXXXX-XXXXXXX</div>
+
+      <label>Date of Birth</label>
+      <div class="row">
+        <input type="text" id="dobD" placeholder="DD" maxlength="2" inputmode="numeric" />
+        <input type="text" id="dobM" placeholder="MM" maxlength="2" inputmode="numeric" />
+        <input type="text" id="dobY" placeholder="YYYY" maxlength="4" inputmode="numeric" />
+      </div>
+      <div class="err-msg" id="dobErr">Enter a valid date (year up to 2020)</div>
+
+      <label>Marketplace</label>
+      <select id="market">
+        <option value="">Where did you purchase?</option>
+        <option value="uk">Amazon UK</option>
+        <option value="de">Amazon Germany</option>
+      </select>
+
+      <label>Product</label>
+      <select id="product">
+        <option value="mens_crew_socks">Men's Crew Socks</option>
+      </select>
+
+      <label>Pack size</label>
+      <select id="pack">
+        <option value="">Pack size</option>
+        <option value="6">6 Pack</option>
+        <option value="12">12 Pack</option>
+      </select>
+
+      <label>Color</label>
+      <select id="color">
+        <option value="">Color</option>
+        <option value="black">Black</option>
+        <option value="navy">Navy Blue</option>
+      </select>
+
+      <label>Size</label>
+      <select id="size">
+        <option value="">Size</option>
+        <option value="3942">39–42 EU (6–8 UK)</option>
+        <option value="4346">43–46 EU (9–11 UK)</option>
+      </select>
+
+      <button type="button" id="continueBtn">Continue</button>
+    </section>
+
+    <section id="step3" class="hidden fade-in">
+      <h2>How was your experience?</h2>
+      <div class="stars" id="stars">
+        <span class="star" data-v="1">★</span>
+        <span class="star" data-v="2">★</span>
+        <span class="star" data-v="3">★</span>
+        <span class="star" data-v="4">★</span>
+        <span class="star" data-v="5">★</span>
+      </div>
+      <p class="muted center" id="ratingText">Tap a star to rate</p>
+
+      <div id="reviewBlock" class="hidden">
+        <label>Minimum 25 characters</label>
+        <textarea id="review" placeholder="Share your experience"></textarea>
+        <small class="counter"><span id="cCount">0</span> / 25 minimum</small>
+        <button type="button" id="amazonBtn" class="hidden">Copy & Open Amazon</button>
+        <button type="button" id="feedbackBtn" class="hidden">Send your review</button>
+      </div>
+    </section>
+
+    <section id="stepDone" class="hidden fade-in center">
+      <div class="check-circle">✔</div>
+      <h2>Thank you for your feedback!</h2>
+      <p class="thanks-text">We truly appreciate that you purchased our product and took the time to share your experience.</p>
+      <p class="thanks-text">Your request is being processed and will be completed within 2–3 days.</p>
+    </section>
+  </div>
+</main>
+
+<canvas id="confettiCanvas"></canvas>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SHEETS_URL = "https://script.google.com/macros/s/AKfycbzh_RTYdykhJ0szdFv7qfMe7C17FtCHTrTX571Y8xOeY2proCWRgKiVk9jisZKWzlul/exec";
+
+  var ASIN_MAP = {
+    black_3942_12:"B0GWLN5VSK", black_3942_6:"B0GWLJ4H1P",
+    black_4346_12:"B0GWLVWY3S", black_4346_6:"B0GWLL8BC9",
+    navy_3942_12:"B0GWLTH8T1", navy_3942_6:"B0GWLXD4TM",
+    navy_4346_12:"B0GWLYZK9X", navy_4346_6:"B0GWLTRP8Y"
+  };
+  var RATING_TEXT = ["Very Bad 😡","Bad 🙁","Okay 😐","Good 🙂","Excellent 😍"];
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var ORDER_RE = /^\d{3}-\d{7}-\d{7}$/;
+  var STORAGE_KEY = "nomad-nexus-funnel";
+  var BACKUP_KEY = "nomad-nexus-submissions";
+  var MIN_REVIEW = 25;
+
+  var state = { step:1, rating:0, form:{} };
+  try {
+    var saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"null");
+    if(saved) state = Object.assign(state, saved);
+  } catch(e){}
+
+  document.addEventListener("submit", function(e){ e.preventDefault(); }, true);
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Enter" && e.target instanceof HTMLInputElement){ e.preventDefault(); }
+  }, true);
+
+  function $(id){ return document.getElementById(id); }
+  function show(id){ $(id).classList.remove("hidden"); }
+  function hide(id){ $(id).classList.add("hidden"); }
+  function toast(msg, isErr){
+    var t = $("toast");
+    t.textContent = msg;
+    t.className = "toast show" + (isErr ? " error" : "");
+    setTimeout(function(){ t.className = "toast" + (isErr ? " error" : ""); }, 2400);
+  }
+  function persist(){
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function setStep(n){
+    state.step = n; persist();
+    ["step1","step2","step3","stepDone"].forEach(function(s){ hide(s); });
+    if(n===1) show("step1");
+    else if(n===2) show("step2");
+    else if(n===3) show("step3");
+    else show("stepDone");
+    var sec = document.querySelector("section:not(.hidden)");
+    if(sec){ sec.classList.remove("fade-in"); void sec.offsetWidth; sec.classList.add("fade-in"); }
+    window.scrollTo(0,0);
+  }
+  function getAsin(form){
+    return ASIN_MAP[form.color+"_"+form.size+"_"+form.pack] || "";
+  }
+  function amazonBase(market){
+    return market === "de" ? "https://www.amazon.de" : "https://www.amazon.co.uk";
+  }
+  function digitsOnly(v){ return v.replace(/\D/g,""); }
+
+  function formatOrder(v){
+    var d = digitsOnly(v).slice(0,17);
+    var out = d.slice(0,3);
+    if(d.length > 3) out += "-" + d.slice(3,10);
+    if(d.length > 10) out += "-" + d.slice(10,17);
+    return out;
+  }
+  $("order").addEventListener("input", function(e){
+    e.target.value = formatOrder(e.target.value);
+    e.target.classList.remove("error");
+    $("orderErr").classList.remove("show");
+  });
+
+  function bindDob(id, max, nextId){
+    var el = $(id);
+    el.addEventListener("input", function(e){
+      e.target.value = digitsOnly(e.target.value).slice(0,max);
+      e.target.classList.remove("error");
+      $("dobErr").classList.remove("show");
+      if(e.target.value.length >= max && nextId){ $(nextId).focus(); }
+    });
+  }
+  bindDob("dobD",2,"dobM");
+  bindDob("dobM",2,"dobY");
+  bindDob("dobY",4,null);
+
+  function validDob(d,m,y){
+    d=parseInt(d,10); m=parseInt(m,10); y=parseInt(y,10);
+    if(!d||!m||!y) return false;
+    if(d<1||d>31) return false;
+    if(m<1||m>12) return false;
+    if(y<1900||y>2020) return false;
+    return true;
+  }
+
+  ["fname","lname","email","paypal","order","market","product","pack","color","size"].forEach(function(k){
+    if(state.form[k] != null && $(k)) $(k).value = state.form[k];
+    if($(k)) $(k).addEventListener("input", function(e){
+      state.form[k] = e.target.value; persist();
+      e.target.classList.remove("error");
+    });
+    if($(k) && $(k).tagName === "SELECT") $(k).addEventListener("change", function(e){
+      state.form[k] = e.target.value; persist();
+      e.target.classList.remove("error");
+    });
+  });
+  if(state.form.dobD) $("dobD").value = state.form.dobD;
+  if(state.form.dobM) $("dobM").value = state.form.dobM;
+  if(state.form.dobY) $("dobY").value = state.form.dobY;
+  ["dobD","dobM","dobY"].forEach(function(k){
+    $(k).addEventListener("input", function(e){
+      state.form[k] = e.target.value; persist();
+    });
+  });
+
+  // PayPal auto-fill from email on focus (no override on manual edit)
+  var paypalTouched = !!(state.form.paypal && state.form.paypal.length);
+  $("paypal").addEventListener("input", function(){ paypalTouched = true; });
+  $("paypal").addEventListener("focus", function(){
+    var pp = $("paypal");
+    var em = $("email").value.trim();
+    if(em && !paypalTouched && !pp.value){
+      pp.value = em;
+      state.form.paypal = em;
+      persist();
+    }
+  });
+
+  // Confetti
+  function confetti(duration){
+    var canvas = $("confettiCanvas");
+    var ctx = canvas.getContext("2d");
+    var dpr = window.devicePixelRatio || 1;
+    var W = window.innerWidth, H = window.innerHeight;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    canvas.style.width = W+"px"; canvas.style.height = H+"px";
+    ctx.scale(dpr,dpr);
+    var colors = ["#0f1115","#16a34a","#f59e0b","#3b82f6","#ef4444","#a855f7"];
+    var N = Math.min(160, Math.floor(W/4));
+    var parts = [];
+    for(var i=0;i<N;i++){
+      parts.push({
+        x: W/2 + (Math.random()-.5)*60,
+        y: H/3,
+        vx: (Math.random()-.5)*8,
+        vy: Math.random()*-8 - 4,
+        g: 0.25 + Math.random()*0.15,
+        size: 5 + Math.random()*5,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        rot: Math.random()*Math.PI,
+        vr: (Math.random()-.5)*0.3,
+        life: 1
+      });
+    }
+    var start = performance.now();
+    function frame(now){
+      var t = now - start;
+      ctx.clearRect(0,0,W,H);
+      for(var i=0;i<parts.length;i++){
+        var p = parts[i];
+        p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        if(t > duration*0.6) p.life = Math.max(0, 1 - (t-duration*0.6)/(duration*0.4));
+        ctx.save();
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+        ctx.restore();
+      }
+      if(t < duration){ requestAnimationFrame(frame); }
+      else { ctx.clearRect(0,0,W,H); }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  $("startBtn").addEventListener("click", function(){
+    confetti(1500);
+    setTimeout(function(){ setStep(2); }, 350);
+  });
+
+  $("continueBtn").addEventListener("click", function(){
+    var fields = ["fname","lname","email","paypal","order","market","product","pack","color","size"];
+    var ok = true;
+    fields.forEach(function(k){
+      var el = $(k);
+      if(!el.value){ el.classList.add("error"); ok = false; }
+    });
+    if($("email").value && !EMAIL_RE.test($("email").value)){ $("email").classList.add("error"); ok=false; }
+    if($("paypal").value && !EMAIL_RE.test($("paypal").value)){ $("paypal").classList.add("error"); ok=false; }
+    if(!ORDER_RE.test($("order").value)){
+      $("order").classList.add("error");
+      $("orderErr").classList.add("show");
+      ok = false;
+    }
+    var d=$("dobD").value, m=$("dobM").value, y=$("dobY").value;
+    if(!validDob(d,m,y)){
+      $("dobD").classList.add("error");
+      $("dobM").classList.add("error");
+      $("dobY").classList.add("error");
+      $("dobErr").classList.add("show");
+      ok = false;
+    }
+    if(!ok){ toast("Please complete all fields correctly", true); return; }
+
+    state.form = {
+      fname:$("fname").value, lname:$("lname").value,
+      email:$("email").value, paypal:$("paypal").value,
+      order:$("order").value, market:$("market").value,
+      product:$("product").value, pack:$("pack").value,
+      color:$("color").value, size:$("size").value,
+      dobD:d, dobM:m, dobY:y
+    };
+    persist();
+    setStep(3);
+  });
+
+  function renderStars(){
+    var stars = document.querySelectorAll(".star");
+    stars.forEach(function(s){
+      var v = parseInt(s.getAttribute("data-v"),10);
+      s.classList.toggle("active", v <= state.rating);
+    });
+    $("ratingText").textContent = state.rating > 0 ? RATING_TEXT[state.rating-1] : "Tap a star to rate";
+
+    if(state.rating > 0){
+      show("reviewBlock");
+      if(state.rating >= 4){ show("amazonBtn"); hide("feedbackBtn"); }
+      else { hide("amazonBtn"); show("feedbackBtn"); }
+    } else {
+      hide("reviewBlock");
+    }
+  }
+  document.querySelectorAll(".star").forEach(function(s){
+    s.addEventListener("click", function(){
+      state.rating = parseInt(s.getAttribute("data-v"),10);
+      persist();
+      renderStars();
+    });
+  });
+  $("review").addEventListener("input", function(e){
+    var len = e.target.value.trim().length;
+    $("cCount").textContent = len;
+    var c = document.querySelector(".counter");
+    if(c){ c.classList.toggle("ok", len >= MIN_REVIEW); }
+  });
+
+  function buildPayload(reviewText){
+    var f = state.form;
+    var birthdate = (f.dobD||"").padStart(2,"0")+"-"+(f.dobM||"").padStart(2,"0")+"-"+(f.dobY||"");
+    var variation = f.color+"_"+f.size+"_"+f.pack;
+    return {
+      marketplace: f.market,
+      variation: variation,
+      asin: getAsin(f),
+      order: f.order,
+      firstName: f.fname,
+      lastName: f.lname,
+      email: f.email,
+      paypal: f.paypal,
+      birthdate: birthdate,
+      payment: false,
+      date: new Date().toISOString(),
+      rating: String(state.rating||""),
+      review: reviewText || ""
+    };
+  }
+  function backupLocal(payload){
+    try {
+      var arr = JSON.parse(localStorage.getItem(BACKUP_KEY)||"[]");
+      arr.push(payload);
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(arr));
+    } catch(e){}
+  }
+  function sendSheets(payload){
+    return fetch(SHEETS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  $("amazonBtn").addEventListener("click", async function(){
+    var review = $("review").value.trim();
+    if(review.length < MIN_REVIEW){ toast("Review too short (min 25)", true); return; }
+    var btn = $("amazonBtn"); btn.disabled = true; btn.textContent = "Saving…";
+    var payload = buildPayload(review);
+    backupLocal(payload);
+    try { await sendSheets(payload); } catch(e){}
+    try { await navigator.clipboard.writeText(review); toast("Review copied"); } catch(e){}
+    var asin = payload.asin;
+    var base = amazonBase(state.form.market);
+    var url = asin ? base+"/review/create-review?asin="+asin : base;
+    sessionStorage.removeItem(STORAGE_KEY);
+    setStep("done");
+    setTimeout(function(){ window.open(url, "_blank"); }, 1200);
+  });
+
+  $("feedbackBtn").addEventListener("click", async function(){
+    var review = $("review").value.trim();
+    if(review.length < MIN_REVIEW){ toast("Review too short (min 25)", true); return; }
+    var btn = $("feedbackBtn"); btn.disabled = true; btn.textContent = "Saving…";
+    var payload = buildPayload(review);
+    backupLocal(payload);
+    try { await sendSheets(payload); } catch(e){}
+    sessionStorage.removeItem(STORAGE_KEY);
+    setStep("done");
+  });
+
+  setStep(state.step || 1);
+  renderStars();
+})();
+</script>
+</body>
+</html>
